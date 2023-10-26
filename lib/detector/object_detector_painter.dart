@@ -42,7 +42,7 @@ class ObjectDetectorPainter extends CustomPainter {
     final Paint paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3.0
-      ..color = Colors.lightGreenAccent;
+      ..color = Colors.redAccent;
 
     final Paint paintSquare = Paint()
       ..style = PaintingStyle.stroke
@@ -116,6 +116,7 @@ class ObjectDetectorPainter extends CustomPainter {
         // if (desiredSquareRect!.containsRect(objectRect) &&
         //     (desiredSquareRect!.height - objectRect.height < maxHeightDiff) ) {
           onDocumentDetected?.call();
+          paint.color = Colors.lightGreenAccent;
         }
       }
 
