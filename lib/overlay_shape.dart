@@ -1,10 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_camera_overlay/model.dart';
-
+extension GlobalPaintBounds on BuildContext {
+  Rect? get globalPaintBounds {
+    final renderObject = findRenderObject();
+    final translation = renderObject?.getTransformTo(null).getTranslation();
+    if (translation != null && renderObject?.paintBounds != null) {
+      final offset = Offset(translation.x, translation.y -70);
+      return renderObject!.paintBounds.shift(offset);
+    } else {
+      return null;
+    }
+  }
+}
 class OverlayShape extends StatelessWidget {
-  const OverlayShape(this.model, {Key? key}) : super(key: key);
+  const OverlayShape({Key? key, this.onSquareRect, required this.model}) : super(key: key);
 
   final OverlayModel model;
+  final Function(Rect)? onSquareRect;
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +30,9 @@ class OverlayShape extends StatelessWidget {
     double height = width / ratio;
     double radius =
         model.cornerRadius == null ? 0 : model.cornerRadius! * height;
+
+
+
     if (media.orientation == Orientation.portrait) {}
     return Stack(
       children: [
@@ -31,9 +46,20 @@ class OverlayShape extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(radius),
                       side: const BorderSide(width: 1, color: Colors.white))),
-            )),
+            child: Builder(builder: (BuildContext context) {
+              WidgetsBinding.instance
+                  .addPostFrameCallback((_) => onSquareRect?.call(
+                  context.globalPaintBounds!
+                // Rect.fromCenter(
+                // center: Offset(width -165, height +105),
+                // // radius: radius
+                // width: width, height: height)
+              )
+              );
+              return const SizedBox.shrink();
+            },),)),
         ColorFiltered(
-          colorFilter: const ColorFilter.mode(Colors.black54, BlendMode.srcOut),
+          colorFilter: const ColorFilter.mode(Colors.black12, BlendMode.srcOut),
           child: Stack(
             children: [
               Container(
