@@ -4,10 +4,10 @@ enum OverlayFormat {
   ///Most banking cards and ID cards
   cardID1,
 
-  ///French and other ID cards. Visas.
+  ///Visas.
   cardID2,
 
-  ///United States government ID cards
+  ///ID cards
   cardID3,
 
   ///SIM cards
@@ -46,7 +46,8 @@ class CardOverlay implements OverlayModel {
       case (OverlayFormat.cardID2):
         return CardOverlay(ratio: 1.42, cornerRadius: 0.067);
       case (OverlayFormat.cardID3):
-        return CardOverlay(ratio: 1.42, cornerRadius: 0.057);
+        // return CardOverlay(ratio: 1.20, cornerRadius: 0.057);
+        return CardOverlay(ratio: 1.42, cornerRadius: 0.0);
       case (OverlayFormat.simID000):
         return CardOverlay(ratio: 1.66, cornerRadius: 0.073);
     }

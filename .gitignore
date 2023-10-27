@@ -7,3 +7,9 @@
 /lib/main.dart
 /web/
 /flutter_camera_overlay.iml
+.flutter-plugins
+.flutter-plugins-dependencies
+.dart_tool
+/build
+*/**/build
+pubspec.lock
