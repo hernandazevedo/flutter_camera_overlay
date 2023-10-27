@@ -1,6 +1,4 @@
-import 'dart:io';
 import 'dart:ui';
-import 'dart:ui' as ui;
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_object_detection/google_mlkit_object_detection.dart';
@@ -13,10 +11,8 @@ class ObjectDetectorPainter extends CustomPainter {
     this.rotation,
     this.cameraLensDirection,
     this.onDocumentDetected, 
-    this.desiredSquareRect
   );
   final Function()? onDocumentDetected;
-  Rect? desiredSquareRect;
   final List<DetectedObject> _objects;
   final Size imageSize;
   final InputImageRotation rotation;
@@ -45,10 +41,10 @@ class ObjectDetectorPainter extends CustomPainter {
     double ratio = 1.42;
     double height = width / ratio;
 
-    desiredSquareRect = (Offset(x, height) & Size(width, height));
+    final desiredSquareRect = (Offset(x, height) & Size(width, height));
 
     //initial desired position to fit the document
-    canvas.drawRect(desiredSquareRect!, paint);
+    canvas.drawRect(desiredSquareRect, paint);
 
     // final Paint background = Paint()..color = Color(0x99000000);
     // if (desiredSquareRect != null) {
@@ -107,20 +103,18 @@ class ObjectDetectorPainter extends CustomPainter {
         cameraLensDirection,
       );
       final objectRect = Rect.fromLTRB(left, top, right, bottom);
-      if (desiredSquareRect != null) {
         if(
-        (desiredSquareRect!.top - objectRect.top).abs() < maxDistance &&
-        (desiredSquareRect!.left - objectRect.left).abs() < maxDistance &&
-        (desiredSquareRect!.right - objectRect.right).abs() < maxDistance &&
-        (desiredSquareRect!.bottom - objectRect.bottom).abs() < maxDistance
+        (desiredSquareRect.top - objectRect.top).abs() < maxDistance &&
+        (desiredSquareRect.left - objectRect.left).abs() < maxDistance &&
+        (desiredSquareRect.right - objectRect.right).abs() < maxDistance &&
+        (desiredSquareRect.bottom - objectRect.bottom).abs() < maxDistance
         ){
-          onDocumentDetected?.call();
           //TODO parametrize this
           paint.color = Colors.lightGreenAccent;
+          onDocumentDetected?.call();
         }
-      }
 
-      canvas.drawRect(desiredSquareRect!, paint);
+      canvas.drawRect(desiredSquareRect, paint);
       // canvas.drawRect(
       //   objectRect,
       //   paint,

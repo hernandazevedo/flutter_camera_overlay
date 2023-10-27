@@ -13,10 +13,12 @@ class CameraView extends StatefulWidget {
       this.onCameraFeedReady,
       this.onDetectorViewModeChanged,
       this.onCameraLensDirectionChanged,
+      this.pictureController,
       this.initialCameraLensDirection = CameraLensDirection.back})
       : super(key: key);
 
   final CustomPaint? customPaint;
+  final PictureController? pictureController;
   final Function(InputImage inputImage) onImage;
   final VoidCallback? onCameraFeedReady;
   final VoidCallback? onDetectorViewModeChanged;
@@ -27,9 +29,16 @@ class CameraView extends StatefulWidget {
   State<CameraView> createState() => _CameraViewState();
 }
 
+class PictureController {
+  late CameraController controller;
+  Future<XFile> takePicture() async {
+    return controller.takePicture();
+  }
+}
 class _CameraViewState extends State<CameraView> {
   static List<CameraDescription> _cameras = [];
   CameraController? _controller;
+  PictureController? _pictureController;
   int _cameraIndex = -1;
   double _currentZoomLevel = 1.0;
   double _minAvailableZoom = 1.0;
@@ -47,6 +56,7 @@ class _CameraViewState extends State<CameraView> {
   }
 
   void _initialize() async {
+    _pictureController = widget.pictureController;
     if (_cameras.isEmpty) {
       _cameras = await availableCameras();
     }
@@ -268,6 +278,7 @@ class _CameraViewState extends State<CameraView> {
           ? ImageFormatGroup.nv21
           : ImageFormatGroup.bgra8888,
     );
+    _pictureController?.controller = _controller!;
     _controller?.initialize().then((_) {
       if (!mounted) {
         return;

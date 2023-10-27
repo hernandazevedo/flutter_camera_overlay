@@ -2,10 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:flutter_camera_overlay/detector/detector_view.dart';
 import 'package:flutter_camera_overlay/detector/object_detector_view.dart';
-import 'package:flutter_camera_overlay/flutter_camera_overlay.dart';
 import 'package:flutter_camera_overlay/model.dart';
+import 'package:gallery_saver/gallery_saver.dart';
 
 main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,9 +77,10 @@ class _ExampleCameraOverlayState extends State<ExampleCameraOverlay> {
             }
             return Stack(
               children: [ObjectDetectorView(
-                  onDocumentDetected: () {
+                  onDocumentDetected: (String imagePath) {
                     print("Document Found \n");
-                    },
+                    GallerySaver.saveImage(imagePath);
+                  },
                   info: 'Posicione sua identidade dentro do retângulo e certifique-se de que a imagem esteja perfeitamente legível.',
                   label: 'Scaneando'
               ),

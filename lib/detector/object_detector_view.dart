@@ -1,9 +1,10 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter_camera_overlay/detector/camera_view.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_camera_overlay/model.dart';
 import 'package:google_mlkit_object_detection/google_mlkit_object_detection.dart';
-
-import '../overlay_shape.dart';
 import 'detector_view.dart';
 import 'object_detector_painter.dart';
 import 'utils.dart';
@@ -12,7 +13,7 @@ class ObjectDetectorView extends StatefulWidget {
   final String? label;
   final String? info;
   final EdgeInsets? infoMargin;
-  final Function()? onDocumentDetected;
+  final Function(String)? onDocumentDetected;
 
   const ObjectDetectorView({Key? key, this.label, this.info, this.infoMargin, this.onDocumentDetected}) : super(key: key);
   @override
@@ -22,13 +23,13 @@ class ObjectDetectorView extends StatefulWidget {
 class _ObjectDetectorView extends State<ObjectDetectorView> {
   ObjectDetector? _objectDetector;
   DetectionMode _mode = DetectionMode.stream;
+  final PictureController _pictureController = PictureController();
   bool _canProcess = false;
   bool _isBusy = false;
   CustomPaint? _customPaint;
   String? _text;
   var _cameraLensDirection = CameraLensDirection.back;
   int _option = 1;
-  Rect? squareRect;
   final _options = {
     'default': '',
     'object_custom': 'object_labeler.tflite',
@@ -63,11 +64,12 @@ class _ObjectDetectorView extends State<ObjectDetectorView> {
     return Scaffold(
       body: Stack(children: [
         DetectorView(
+            pictureController: _pictureController,
             title: 'Object Detector',
             customPaint: _customPaint,
             text: _text,
             onImage: (InputImage inputImage) {
-              _processImage(inputImage, squareRect, widget.onDocumentDetected);
+              _processImage(inputImage, widget.onDocumentDetected);
             },
             initialCameraLensDirection: _cameraLensDirection,
             onCameraLensDirectionChanged: (value) => _cameraLensDirection = value,
@@ -75,13 +77,6 @@ class _ObjectDetectorView extends State<ObjectDetectorView> {
             initialDetectionMode: DetectorViewMode.values[_mode.index],
             onDetectorViewModeChanged: _onScreenModeChanged,
           ),
-        OverlayShape(onSquareRect: (Rect r) {
-          setState(() {
-            if(squareRect != r) {
-              squareRect = r;
-            }
-          });
-        },model: CardOverlay.byFormat(OverlayFormat.cardID3)),
         Align(
           alignment: Alignment.topCenter,
           child: Container(
@@ -218,7 +213,7 @@ class _ObjectDetectorView extends State<ObjectDetectorView> {
     _canProcess = true;
   }
 
-  Future<void> _processImage(InputImage inputImage, Rect? squareRect, Function()? onDocumentDetected) async {
+  Future<void> _processImage(InputImage inputImage, Function(String)? onDocumentDetected) async {
     if (_objectDetector == null) return;
     if (!_canProcess) return;
     if (_isBusy) return;
@@ -230,13 +225,24 @@ class _ObjectDetectorView extends State<ObjectDetectorView> {
     // print('Objects found: ${objects.length}\n\n');
     if (inputImage.metadata?.size != null &&
         inputImage.metadata?.rotation != null) {
+
+      // final image = img.Image.fromBytes(
+      //     width: inputImage.metadata!.size.width.toInt(), height: inputImage.metadata!.size.height.toInt(), bytes: inputImage.bytes!.buffer);
+
       final painter = ObjectDetectorPainter(
         objects,
         inputImage.metadata!.size,
         inputImage.metadata!.rotation,
         _cameraLensDirection,
-        onDocumentDetected,
-        squareRect
+        () {
+          WidgetsBinding.instance
+                    .addPostFrameCallback((_) => setState(() {
+            _canProcess = false;
+            buildDialogWithImage(onDocumentDetected);
+          }));
+
+          },
+
       );
       _customPaint = CustomPaint(painter: painter);
     } else {
@@ -253,5 +259,59 @@ class _ObjectDetectorView extends State<ObjectDetectorView> {
     if (mounted) {
       setState(() {});
     }
+  }
+
+  void buildDialogWithImage(Function(String)? onDocumentDetected) async {
+    final picture = await _pictureController.takePicture();
+    final imagePath = picture.path;
+    return showDialog(
+            context: context,
+            barrierColor: Colors.black,
+            builder: (context) {
+              return AlertDialog(
+                  actionsAlignment: MainAxisAlignment.center,
+                  backgroundColor: Colors.black,
+                  title: const Text('Capturar',
+                      style: TextStyle(color: Colors.white),
+                      textAlign: TextAlign.center),
+                  actions: [
+                    OutlinedButton(
+                        onPressed: () async {
+                          Navigator.of(context).pop();
+                          setState(() {
+                            _canProcess = true;
+                          });
+                        },
+                        child: const Icon(Icons.close)),
+                    OutlinedButton(
+                        onPressed: () async {
+                          onDocumentDetected?.call(imagePath);
+                          Navigator.of(context).pop();
+                          setState(() {
+                            _canProcess = true;
+                          });
+                        },
+                        child: const Icon(Icons.check))
+                  ],
+                  content: SizedBox(
+                      width: double.infinity,
+                      child: AspectRatio(
+                        aspectRatio: 1.42,
+                        child: Container(
+                          decoration: BoxDecoration(
+                              image: DecorationImage(
+                                fit: BoxFit.fitWidth,
+                                alignment: FractionalOffset.center,
+                                image: FileImage(
+                                  File(imagePath),
+                                ),
+                                // image: MemoryImage(
+                                //     inputImage.bytes!
+                                // )
+                              )),
+                        ),
+                      )));
+            },
+          );
   }
 }
